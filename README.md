@@ -6,6 +6,11 @@
 所有像素美术都是**代码画出来的**（没有一张外部图片素材），
 整个项目**零第三方依赖**，`node server.js` 就能跑。
 
+> **🌐 在线试玩**：https://samarailly51-pixel.github.io/stardew-town/
+> （GitHub Pages 是纯静态托管，默认演示模式 —— 居民用各自的预置台词。
+> 想用真模型就在开始界面的输入框里粘一个**你自己的** DeepSeek Key，
+> Key 只存在你浏览器里，不会上传到任何服务器。）
+
 ![小镇总览](screenshots/00-overview.png)
 
 ---
