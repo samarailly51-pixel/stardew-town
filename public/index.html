@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>苹果小镇 · Apple Town</title>
+<meta name="description" content="星露谷风格的像素小镇：20 位居民、20 个场景，NPC 由 DeepSeek 驱动，Agent 按场景按需唤醒。" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🍎</text></svg>" />
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+<div id="app">
+  <!-- ============ 游戏舞台 ============ -->
+  <div id="stage">
+    <canvas id="game" width="352" height="224"></canvas>
+
+    <!-- 顶部 HUD -->
+    <div id="hud">
+      <div class="hud-card scene-card">
+        <div id="sceneName">苹果农场</div>
+        <div id="sceneSub">Apple Farm</div>
+        <div class="progress"><i id="exploreBar"></i></div>
+        <div id="exploreText">探索度 0%</div>
+      </div>
+
+      <div class="hud-card stats-card">
+        <div class="stat" title="背包里的苹果">
+          <span class="ico">🍎</span><b id="appleCount">0</b>
+        </div>
+        <div class="stat" title="金币">
+          <span class="ico">🪙</span><b id="coinCount">0</b>
+        </div>
+        <div class="stat" title="已认识的小镇居民">
+          <span class="ico">💛</span><b id="friendCount">0/20</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- 场景 Agent 面板：这是「省 token」的可视化证明 -->
+    <div id="agentPanel" class="hud-card">
+      <div class="ap-head">
+        <span class="dot"></span><span id="apScene">本场景 Agent</span>
+        <span id="apCount" class="ap-count">2 / 20</span>
+      </div>
+      <ul id="apList"></ul>
+      <div class="ap-foot">
+        <span>本次会话 Token</span><b id="apTokens">0</b>
+      </div>
+    </div>
+
+    <!-- 交互提示 -->
+    <div id="hint" class="hidden"><kbd>空格</kbd><span id="hintText">交互</span></div>
+
+    <!-- 飘字提示 -->
+    <div id="toasts"></div>
+
+    <!-- 对话框 -->
+    <div id="dialog" class="hidden">
+      <div class="dlg-portrait"><canvas id="portrait" width="40" height="40"></canvas></div>
+      <div class="dlg-body">
+        <div class="dlg-head">
+          <b id="dlgName">居民</b>
+          <span id="dlgTitle" class="muted"></span>
+          <span id="dlgHearts" class="hearts"></span>
+          <button id="dlgClose" class="x" title="结束对话 (Esc)">✕</button>
+        </div>
+        <div id="dlgText" class="dlg-text"></div>
+        <div class="dlg-actions">
+          <input id="dlgInput" type="text" maxlength="60" placeholder="说点什么…（回车发送）" autocomplete="off" />
+          <button id="dlgSend" class="btn small">说</button>
+          <button id="dlgGift" class="btn small ghost" title="送一个苹果，涨好感">🍎 送苹果</button>
+        </div>
+        <div class="dlg-tips" id="dlgTips"></div>
+      </div>
+    </div>
+
+    <!-- 移动端 / 鼠标控制手柄 -->
+    <div id="controls">
+      <div id="dpad">
+        <button class="dp up"    data-dir="up">▲</button>
+        <button class="dp left"  data-dir="left">◀</button>
+        <button class="dp right" data-dir="right">▶</button>
+        <button class="dp down"  data-dir="down">▼</button>
+        <div class="dp-center"></div>
+      </div>
+      <div id="actions">
+        <button id="btnAct" class="act big" title="交互（空格）">互动</button>
+        <button id="btnMap" class="act" title="小镇地图（M）">地图</button>
+        <button id="btnBag" class="act" title="农场档案（Tab）">档案</button>
+      </div>
+    </div>
+
+    <!-- 场景切换的引路过渡层 -->
+    <div id="transition" class="hidden">
+      <div class="tr-inner">
+        <div id="trGuide" class="tr-guide"></div>
+        <div id="trText" class="tr-text"></div>
+        <div id="trHint" class="tr-hint"></div>
+      </div>
+    </div>
+
+    <div id="flash"></div>
+  </div>
+
+  <!-- ============ 开始界面 ============ -->
+  <div id="startScreen">
+    <div class="ss-box">
+      <div class="ss-logo">🍎</div>
+      <h1>苹果小镇</h1>
+      <p class="ss-sub">Apple Town · 20 位居民 · 20 个场景</p>
+      <p class="ss-desc">
+        秋天到了，苹果熟了。<br />
+        走遍小镇，摘满一筐苹果，认识住在这里的每一个人。
+      </p>
+      <div class="ss-keys">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>方向键</kbd> 走路</div>
+        <div><kbd>空格</kbd> 摘苹果 · 交谈 · 调查</div>
+        <div><kbd>M</kbd> 小镇地图 · <kbd>Tab</kbd> 农场档案 · <kbd>Esc</kbd> 关闭</div>
+      </div>
+      <button id="btnStart" class="btn big">进入小镇</button>
+
+      <!-- 纯静态托管（GitHub Pages）下没有后端，让访客自带 Key 直连 DeepSeek -->
+      <div id="ssKeyRow" class="ss-key hidden">
+        <input id="keyInput" type="password" autocomplete="off" spellcheck="false"
+               placeholder="sk-… 粘贴你自己的 DeepSeek Key" />
+        <button id="btnSaveKey" class="btn small">保存</button>
+        <button id="btnClearKey" class="link">清除</button>
+      </div>
+      <div id="ssKeyTip" class="ss-key-tip hidden">
+        Key 只存在你这台电脑的浏览器里，不会上传到任何服务器。
+        不填也能玩，居民会用预置台词回答。
+      </div>
+
+      <div class="ss-foot">
+        <span id="ssMode" class="mode-tag">检测模型状态中…</span>
+        <button id="btnVerify" class="link">Key 自检</button>
+      </div>
+      <div id="ssVerifyOut" class="ss-verify hidden"></div>
+    </div>
+  </div>
+
+  <!-- ============ 弹窗面板：地图 / 档案 ============ -->
+  <div id="modal" class="hidden">
+    <div class="modal-box">
+      <div class="modal-head">
+        <b id="modalTitle">小镇地图</b>
+        <button id="modalClose" class="x">✕</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>

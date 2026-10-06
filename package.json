@@ -1,0 +1,20 @@
+{
+  "name": "stardew-town",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "苹果小镇 —— 星露谷风格的像素小镇，20 个角色 / 20 个场景，NPC 由 DeepSeek 驱动，Agent 按场景按需唤醒",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node tools/check.mjs",
+    "sim": "node tools/sim.mjs",
+    "render": "node tools/render.mjs",
+    "test": "node tools/check.mjs && node tools/dom-check.mjs && node tools/sim.mjs",
+    "build:pages": "node tools/build-pages.mjs",
+    "crawl": "node tools/crawl.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
